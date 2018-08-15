@@ -4,8 +4,8 @@
 - [x] Disable the play button if it's playing
 - [x] Disable the pause button if it's not playing
 - [x] Make the PlayPause button work
-- [ ] Make the JumpForward button work
-- [ ] Make the JumpBack button work
+- [x] Make the JumpForward button work
+- [x] Make the JumpBack button work
 - [ ] Make the progress bar work
   - change the width of the inner element to the percentage of the played track
   - add a click handler on the progress bar to jump to the clicked spot
@@ -68,11 +68,15 @@ class AudioPlayer extends React.Component {
       pause: () =>
         this.setState({ playing: false }, () => {
           this.audio.pause();
-        })
+        }),
+      forward: () => (this.audio.currentTime = this.audio.currentTime + 10),
+      backward: () => (this.audio.currentTime = this.audio.currentTime - 10),
+      getProgressInPercent: () =>
+        this.audio &&
+        Math.ceil(100 * this.audio.currentTime / this.audio.duration) + "%"
     };
   }
   render() {
-    this.audio && this.audio.play();
     return (
       <div className="audio-player">
         <audio
@@ -145,14 +149,18 @@ class PlayPause extends React.Component {
 class JumpForward extends React.Component {
   render() {
     return (
-      <button
-        className="icon-button"
-        onClick={null}
-        disabled={null}
-        title="Forward 10 Seconds"
-      >
-        <FaRepeat />
-      </button>
+      <AudioContext.Consumer>
+        {({ forward }) => (
+          <button
+            className="icon-button"
+            onClick={forward}
+            disabled={null}
+            title="Forward 10 Seconds"
+          >
+            <FaRepeat />
+          </button>
+        )}
+      </AudioContext.Consumer>
     );
   }
 }
@@ -160,14 +168,18 @@ class JumpForward extends React.Component {
 class JumpBack extends React.Component {
   render() {
     return (
-      <button
-        className="icon-button"
-        onClick={null}
-        disabled={null}
-        title="Back 10 Seconds"
-      >
-        <FaRotateLeft />
-      </button>
+      <AudioContext.Consumer>
+        {({ backward }) => (
+          <button
+            className="icon-button"
+            onClick={null}
+            disabled={null}
+            title="Back 10 Seconds"
+          >
+            <FaRotateLeft />
+          </button>
+        )}
+      </AudioContext.Consumer>
     );
   }
 }
@@ -175,14 +187,18 @@ class JumpBack extends React.Component {
 class Progress extends React.Component {
   render() {
     return (
-      <div className="progress" onClick={null}>
-        <div
-          className="progress-bar"
-          style={{
-            width: "23%"
-          }}
-        />
-      </div>
+      <AudioContext.Consumer>
+        {({ getProgressInPercent }) => (
+          <div className="progress" onClick={null}>
+            <div
+              className="progress-bar"
+              style={{
+                width: getProgressInPercent()
+              }}
+            />
+          </div>
+        )}
+      </AudioContext.Consumer>
     );
   }
 }
@@ -190,7 +206,8 @@ class Progress extends React.Component {
 const Exercise = () => (
   <div className="exercise">
     <AudioPlayer source={mario}>
-      <PlayPause /> <span className="player-text">Mario Bros. Remix</span>
+      <PlayPause />
+      <span className="player-text">Mario Bros. Remix</span>
       <Progress />
     </AudioPlayer>
 
