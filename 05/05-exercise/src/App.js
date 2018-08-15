@@ -18,9 +18,9 @@ import "./index.css";
 import React from "react";
 import LoadingDots from "./LoadingDots";
 import Map from "./Map";
-//import getAddressFromCoords from './getAddressFromCoords'
+import getAddressFromCoords from "./getAddressFromCoords";
 
-class App extends React.Component {
+class Geolocation extends React.Component {
   state = {
     coords: null,
     error: null
@@ -45,22 +45,62 @@ class App extends React.Component {
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.geoId);
   }
+  render() {
+    return this.props.children(this.state);
+  }
+}
+
+class GeoAddress extends React.Component {
+  state = {
+    address: null
+  };
+
+  componentDidMount() {
+    const { lat, lng } = this.props;
+    lat && lng && this.setAddress(lat, lng);
+  }
+
+  componentDidUpdate(prevProps) {
+    const { lat: prevLat, lng: prevLng } = prevProps,
+      { lat, lng } = this.props;
+    (prevLat !== lat || prevLng !== lng) && this.setAddress(lat, lng);
+  }
+
+  setAddress = (lat, lng) => {
+    getAddressFromCoords(lat, lng).then(address => {
+      this.setState({ address });
+    });
+  };
 
   render() {
+    return this.props.children(this.state);
+  }
+}
+
+class App extends React.Component {
+  render() {
     return (
-      <div className="app">
-        {this.state.error ? (
-          <div>Error: {this.state.error.message}</div>
-        ) : this.state.coords ? (
-          <Map
-            lat={this.state.coords.lat}
-            lng={this.state.coords.lng}
-            info="You are here"
-          />
-        ) : (
-          <LoadingDots />
+      <Geolocation>
+        {state => (
+          <div className="app">
+            {state.error ? (
+              <div>Error: {state.error.message}</div>
+            ) : state.coords ? (
+              <GeoAddress lat={state.coords.lat} lng={state.coords.lng}>
+                {({ address }) => (
+                  <Map
+                    lat={state.coords.lat}
+                    lng={state.coords.lng}
+                    info={address}
+                  />
+                )}
+              </GeoAddress>
+            ) : (
+              <LoadingDots />
+            )}
+          </div>
         )}
-      </div>
+      </Geolocation>
     );
   }
 }
