@@ -1,12 +1,12 @@
 /*
-- Make the Play button work
-- Make the Pause button work
-- Disable the play button if it's playing
-- Disable the pause button if it's not playing
-- Make the PlayPause button work
-- Make the JumpForward button work
-- Make the JumpBack button work
-- Make the progress bar work
+- [x] Make the Play button work
+- [x] Make the Pause button work
+- [x] Disable the play button if it's playing
+- [x] Disable the pause button if it's not playing
+- [x] Make the PlayPause button work
+- [ ] Make the JumpForward button work
+- [ ] Make the JumpBack button work
+- [ ] Make the progress bar work
   - change the width of the inner element to the percentage of the played track
   - add a click handler on the progress bar to jump to the clicked spot
 
@@ -53,18 +53,40 @@ import FaPlay from "react-icons/lib/fa/play";
 import FaRepeat from "react-icons/lib/fa/repeat";
 import FaRotateLeft from "react-icons/lib/fa/rotate-left";
 
+const AudioContext = React.createContext();
+
 class AudioPlayer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      playing: false,
+      play: () => {
+        this.setState({ playing: true }, () => {
+          this.audio.play();
+        });
+      },
+      pause: () =>
+        this.setState({ playing: false }, () => {
+          this.audio.pause();
+        })
+    };
+  }
   render() {
+    this.audio && this.audio.play();
     return (
       <div className="audio-player">
         <audio
-          src={null}
+          src={this.props.source}
           onTimeUpdate={null}
           onLoadedData={null}
           onEnded={null}
-          ref={n => (this.audio = n)}
+          ref={n => {
+            this.audio = n;
+          }}
         />
-        {this.props.children}
+        <AudioContext.Provider value={this.state}>
+          {this.props.children}
+        </AudioContext.Provider>
       </div>
     );
   }
@@ -73,14 +95,20 @@ class AudioPlayer extends React.Component {
 class Play extends React.Component {
   render() {
     return (
-      <button
-        className="icon-button"
-        onClick={null}
-        disabled={null}
-        title="play"
-      >
-        <FaPlay />
-      </button>
+      <AudioContext.Consumer>
+        {({ play, playing }) => {
+          return (
+            <button
+              className="icon-button"
+              onClick={play}
+              disabled={playing}
+              title="play"
+            >
+              <FaPlay />
+            </button>
+          );
+        }}
+      </AudioContext.Consumer>
     );
   }
 }
@@ -88,21 +116,29 @@ class Play extends React.Component {
 class Pause extends React.Component {
   render() {
     return (
-      <button
-        className="icon-button"
-        onClick={null}
-        disabled={null}
-        title="pause"
-      >
-        <FaPause />
-      </button>
+      <AudioContext.Consumer>
+        {({ pause, playing }) => (
+          <button
+            className="icon-button"
+            onClick={pause}
+            disabled={!playing}
+            title="pause"
+          >
+            <FaPause />
+          </button>
+        )}
+      </AudioContext.Consumer>
     );
   }
 }
 
 class PlayPause extends React.Component {
   render() {
-    return null;
+    return (
+      <AudioContext.Consumer>
+        {({ playing }) => (playing ? <Pause /> : <Play />)}
+      </AudioContext.Consumer>
+    );
   }
 }
 
@@ -154,7 +190,7 @@ class Progress extends React.Component {
 const Exercise = () => (
   <div className="exercise">
     <AudioPlayer source={mario}>
-      <Play /> <Pause /> <span className="player-text">Mario Bros. Remix</span>
+      <PlayPause /> <span className="player-text">Mario Bros. Remix</span>
       <Progress />
     </AudioPlayer>
 
